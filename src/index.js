@@ -3,11 +3,13 @@ import ReactDOM from 'react-dom';
 import words from 'words';
 import 'main.css';
 
+words.sort();
+
 //The size of words
 const wordSize = 5;
 
 //The amount of rows
-const rowCount = 5;
+const rowCount = 10;
 
 //A single letter square
 function Square(props) {
@@ -53,7 +55,6 @@ class App extends React.Component {
 
   //Get keydown events and apply them to the proper letter
   keydown(e) {
-    console.log(this.state);
     if (this.state.done) return e.preventDefault();
     const key = String.fromCharCode(e.keyCode);
 
