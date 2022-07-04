@@ -3,13 +3,17 @@ import ReactDOM from 'react-dom';
 import words from 'words';
 import 'main.css';
 
+import { ErrorMessage, SuccessMessage } from './message';
+
+import solve from 'solver';
+
 words.sort();
 
 //The size of words
 const wordSize = 5;
 
 //The amount of rows
-const rowCount = 10;
+const rowCount = 6;
 
 //A single letter square
 function Square(props) {
@@ -43,19 +47,24 @@ class App extends React.Component {
     super(props);
 
     this.state = {
-      validity: new Array(rowCount).fill(new Array(wordSize).fill("default")),
-      words: new Array(rowCount).fill(""),
+      validity: new Array(rowCount).fill(new Array(wordSize).fill('default')),
+      words: new Array(rowCount).fill(''),
       currentRow: 0,
       answer: words[Math.floor(Math.random() * words.length)].toUpperCase(),
       done: false,
-      isCorrect: false
+      isCorrect: false,
+      locked: false,
+      _messageTimerId: void (0)
     };
+
+    console.log(this.state.answer);
+
     window.addEventListener('keydown', e => this.keydown(e));
   }
 
   //Get keydown events and apply them to the proper letter
   keydown(e) {
-    if (this.state.done) return e.preventDefault();
+    if (this.state.done || this.state.locked) return e.preventDefault();
     const key = String.fromCharCode(e.keyCode);
 
     //Only detect alpha keys and backspace
@@ -65,6 +74,7 @@ class App extends React.Component {
     this.setState(state => {
       const words = state.words.slice();
 
+      //Delete on backspace
       if (e.keyCode === 8) words[state.currentRow] = words[state.currentRow].slice(0, -1);
       else words[state.currentRow] += key;
 
@@ -81,16 +91,23 @@ class App extends React.Component {
       let oldWord = this.state.words[oldRow];
 
       //Check if it's a word if it's not clear the row
-      if (!words.includes(oldWord.toLowerCase()))
-        return this.setState(state => {
-          const words = state.words.slice();
-          words[oldRow] = "";
-          return {
-            currentRow: oldRow,
-            words
-          }
-        });
+      if (!words.includes(oldWord.toLowerCase())) {
+        this.setState({ locked: true });
 
+        //Display an error message
+        return this.showError('Not in word list', 1500, () => {
+          this.setState(state => {
+
+            const words = state.words.slice();
+            words[oldRow] = '';
+            return {
+              currentRow: oldRow,
+              words,
+              locked: false
+            }
+          });
+        });
+      }
 
       for (let i in oldWord) {
         let letter = oldWord[i];
@@ -98,30 +115,88 @@ class App extends React.Component {
         //Create a deep copy of the validity array
         const validity = JSON.parse(JSON.stringify(this.state.validity));
         if (letter === this.state.answer[i]) {
-          validity[oldRow][i] = "correct";
+          validity[oldRow][i] = 'correct';
         } else if (this.state.answer.includes(letter)) {
-          validity[oldRow][i] = "wrong-pos";
+          validity[oldRow][i] = 'wrong-pos';
         } else continue;
-        const isCorrect = validity[oldRow].every(v => v === "correct");
+        const isCorrect = validity[oldRow].every(v => v === 'correct');
         const done = isCorrect || this.state.currentRow === rowCount;
+        if (done) {
+          if (isCorrect)
+            this.showSuccess('Yay you got the word nice job!')
+          else
+            this.showError('Aww you didn\'t get the word, the word was: ' + this.state.answer, Infinity, () => { });
+        }
         this.setState({ validity, done, isCorrect });
       }
     }
   }
 
-  render() {
-    const rows = [];
-    for (let i = 0; i < rowCount; ++i) {
-      rows.push(<Row key={i} word={this.state.words[i] ?? ""} validity={this.state.validity[i]} />)
+  //Set an error
+  showError(message, time, messageEndCB) {
+    this.clearMessage();
+
+    //Show the new message
+    var tId;
+
+    if (time < Infinity) {
+      tId = setTimeout(() => {
+        this.setState({ isErrorShown: false, message: void (0), _messageTimerId: void (0) });
+        messageEndCB();
+      }, time);
     }
+    this.setState({ isErrorShown: true, message, _messageTimerId: tId });
+  }
+
+  //Set an error
+  showSuccess(message, time, messageEndCB) {
+    this.clearMessage();
+
+    //Show the new message
+    var tId;
+    if (time < Infinity) {
+      tId = setTimeout(() => {
+        this.setState({ isSuccessShown: false, message: void (0), _messageTimerId: void (0) });
+        messageEndCB();
+      }, time);
+    }
+    this.setState({ isSuccessShown: true, message, _messageTimerId: tId });
+  }
+
+  //Clear all messages
+  clearMessage() {
+
+    //Clear any already displayed messages
+    if (this.state._messageTimerId) {
+      clearTimeout(setTimeout);
+      messageEndCB();
+    }
+  }
+
+  //Start autosolving
+  autosolve() {
+    this.setState({ locked: true });
+    solve();
+  }
+
+  //Main render function
+  render() {
+    //Create all the rows
+    const rows = [];
+    for (let i = 0; i < rowCount; ++i)
+      rows.push(<Row key={i} word={this.state.words[i] ?? ""} validity={this.state.validity[i]} />);
     return (
-      <center>
-        <h1>Wordle AI</h1>
-        {rows}
-        {this.state.done && this.state.isCorrect && <h3>Yay you got the word</h3>}
-        {this.state.done && !this.state.isCorrect && <h3>Aww dang the word was <i>{this.state.answer}</i></h3>}
-      </center>
+      <div className="wrapper">
+        {this.state.isErrorShown && <ErrorMessage message={this.state.message}></ErrorMessage>}
+        {this.state.isSuccessShown && <SuccessMessage message={this.state.message}></SuccessMessage>}
+        <center>
+          <h1>Wordle</h1>
+          {rows}
+          <br />
+          <button onClick={this.autosolve.bind(this)}>Solve</button>
+        </center >
+      </div>
     );
   }
 }
-ReactDOM.render(<App onKeyPress={() => console.log('key')} />, document.querySelector('#root'));
+ReactDOM.render(<App />, document.querySelector('#root'));

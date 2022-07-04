@@ -2,12 +2,33 @@ html,
 body {
   background-color: #121213;
   color: white;
+  font-family:Arial, Helvetica, sans-serif;
 }
 
 h1 {
   font-size: 55px;
+  font-family:'Courier New', Courier, monospace;
   margin-top: .4em;
   margin-bottom: .1em;
+}
+
+button {
+  border-radius: 4px;
+  border: 1px solid #848485;
+  background-color: transparent;
+  margin-bottom: 2em;
+  color: white;
+  font-size: 3em;
+  padding-left: 2.1em;
+  padding-right: 2.1em;
+  padding-top: .4em;
+  padding-bottom: .4em;
+  transition: background-color .4s cubic-bezier(0.075, 0.82, 0.165, 1);
+
+}
+
+button:hover {
+  background-color: #272729;
 }
 
 .row {
@@ -44,4 +65,29 @@ h1 {
 
 .correct {
   background-color: #20884b;
+}
+
+.message {
+  color: white;
+  border-radius: 4px;
+  width: 42%;
+  height: 2em;
+  font-size: 1.7em;
+  justify-content: center;
+  align-items: center;
+  display: flex;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  margin: auto
+}
+
+.error {
+  background-color: #f05959;
+}
+
+.success {
+  background-color: #67c28c;
 }
