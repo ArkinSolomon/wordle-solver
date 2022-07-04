@@ -68,13 +68,15 @@ button:hover {
 }
 
 .message {
+  z-index: 2300;
+  opacity: 85%;
   color: white;
-  border-radius: 4px;
+  border-radius: 9px;
   width: 42%;
-  height: 2em;
-  font-size: 1.7em;
+  height: 1.7em;
   justify-content: center;
   align-items: center;
+  text-align: center;
   display: flex;
   position: absolute;
   left: 0;

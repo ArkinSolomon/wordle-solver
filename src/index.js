@@ -68,68 +68,83 @@ class App extends React.Component {
     const key = String.fromCharCode(e.keyCode);
 
     //Only detect alpha keys and backspace
-    if (!/[a-z]/i.test(key) && e.keyCode !== 8) return;
+    if ((!/[a-z]/i.test(key) || key.length > 1) && e.keyCode !== 8) return;
 
+    this.insertLetter(e.keyCode === 8 ? 'DELETE' : key);
+  }
+
+  //Insert a letter
+  insertLetter(key) {
+
+    console.log("insert")
     let rowDone = false;
+
     this.setState(state => {
+
       const words = state.words.slice();
 
       //Delete on backspace
-      if (e.keyCode === 8) words[state.currentRow] = words[state.currentRow].slice(0, -1);
+      if (key === 'DELETE') words[state.currentRow] = words[state.currentRow].slice(0, -1);
       else words[state.currentRow] += key;
 
       //Move to the next row if needed
       rowDone = words[state.currentRow].length >= wordSize;
       const currentRow = state.currentRow + rowDone;
       return { words, currentRow };
-    });
+    }, () => {
+      //Calculate the validity for a row once it's done
+      if (rowDone) {
 
-    //Calculate the validity for a row once it's done
-    if (rowDone) {
+        let oldRow = this.state.currentRow - 1;
+        let oldWord = this.state.words[oldRow];
 
-      let oldRow = this.state.currentRow - 1;
-      let oldWord = this.state.words[oldRow];
+        //Check if it's a word if it's not clear the row
+        if (!words.includes(oldWord.toLowerCase())) {
+          this.setState({ locked: true });
 
-      //Check if it's a word if it's not clear the row
-      if (!words.includes(oldWord.toLowerCase())) {
-        this.setState({ locked: true });
+          //Display an error message
+          return this.showError('Not in word list', 1500, () => {
+            this.setState(state => {
 
-        //Display an error message
-        return this.showError('Not in word list', 1500, () => {
-          this.setState(state => {
-
-            const words = state.words.slice();
-            words[oldRow] = '';
-            return {
-              currentRow: oldRow,
-              words,
-              locked: false
-            }
+              const words = state.words.slice();
+              words[oldRow] = '';
+              return {
+                currentRow: oldRow,
+                words,
+                locked: false
+              }
+            });
           });
-        });
-      }
-
-      for (let i in oldWord) {
-        let letter = oldWord[i];
-
-        //Create a deep copy of the validity array
-        const validity = JSON.parse(JSON.stringify(this.state.validity));
-        if (letter === this.state.answer[i]) {
-          validity[oldRow][i] = 'correct';
-        } else if (this.state.answer.includes(letter)) {
-          validity[oldRow][i] = 'wrong-pos';
-        } else continue;
-        const isCorrect = validity[oldRow].every(v => v === 'correct');
-        const done = isCorrect || this.state.currentRow === rowCount;
-        if (done) {
-          if (isCorrect)
-            this.showSuccess('Yay you got the word nice job!')
-          else
-            this.showError('Aww you didn\'t get the word, the word was: ' + this.state.answer, Infinity, () => { });
         }
-        this.setState({ validity, done, isCorrect });
+
+        for (let i in oldWord) {
+          let letter = oldWord[i];
+
+          //Create a deep copy of the validity array
+          const validity = JSON.parse(JSON.stringify(this.state.validity));
+          if (letter === this.state.answer[i]) {
+            validity[oldRow][i] = 'correct';
+          } else if (this.state.answer.includes(letter)) {
+            validity[oldRow][i] = 'wrong-pos';
+          } else continue;
+          const isCorrect = validity[oldRow].every(v => v === 'correct');
+          const done = isCorrect || this.state.currentRow === rowCount;
+          if (done) {
+            if (isCorrect)
+              this.showSuccess('Yay you got the word nice job!')
+            else
+              this.showError('Aww you didn\'t get the word, the word was: ' + this.state.answer, Infinity, () => { });
+          }
+          this.setState({ validity, done, isCorrect });
+        }
       }
-    }
+    });
+  }
+
+  //Insert a whole word
+  insertWord(word) {
+    for (const letter of word.toUpperCase().split()) 
+      this.insertLetter(letter);
   }
 
   //Set an error
@@ -175,8 +190,18 @@ class App extends React.Component {
 
   //Start autosolving
   autosolve() {
-    this.setState({ locked: true });
-    solve();
+
+    //Clear whatever current row we're on
+    this.setState(state => {
+      const newWords = state.words;
+      newWords[state.currentRow] = '';
+      return {
+        locked: true,
+        words: newWords
+      };
+    })
+
+    solve(this);
   }
 
   //Main render function
