@@ -19,4 +19,4 @@ const final = `module.exports=[${words.join(',')}];`;
 const outPath = path.join(__dirname, 'words.js');
 fs.writeFileSync(outPath, final, 'utf8');
 const end = Date.now();
-console.log(`Wrote ${words.length} words to ${outPath} in ${end-start}ms`)
+console.log(`Wrote ${words.length} ${n} letter words to ${outPath} in ${end-start}ms`)

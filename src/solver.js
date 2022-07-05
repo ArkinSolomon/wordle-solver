@@ -18,8 +18,46 @@ export default async function solve(app) {
   //The index of where each letter we know that it includes isn't
   const wrongLetterPlaces = {};
 
-  //Keep trying until we're done
+  //The constantly filtered wordlist
   let wordList = defaultWordList.slice();
+
+  //Analyze a row
+  function analyze(rowNumber) {
+    console.log('Analzying row ' + rowNumber)
+    const row = validity[rowNumber];
+
+    for (const letterIndex in row) {
+      const letterValidity = row[letterIndex];
+      const letter = words[rowNumber][letterIndex].toLowerCase();
+      switch (letterValidity) {
+
+        //If it's in the wrong position push the index where we know it's not
+        case 'wrong-pos':
+          if (!wrongLetterPlaces[letter])
+            wrongLetterPlaces[letter] = [];
+          if (!knownLetters.includes(letter))
+            knownLetters.push(letter);
+          wrongLetterPlaces[letter].push(letterIndex);
+          break;
+
+        //If it's correct set it to the position of where it is
+        case 'correct':
+          correctLetters[letterIndex] = letter;
+          break;
+
+        //If it's wrong put it with all the wrong ones
+        default:
+          wrongLetters.push(letter);
+          break;
+      }
+    }
+  }
+
+  //Analyze all the previous rows
+  for (let i = 0; i < app.state.currentRow; ++i)
+    analyze(i);
+
+  //Keep making guesses until we're done
   while (!app.state.done) {
 
     //Remove all of the correct letters
@@ -49,33 +87,7 @@ export default async function solve(app) {
 
     //Analyze the output
     const rowNumber = app.state.currentRow - 1;
-    const row = validity[rowNumber];
-
-    for (const letterIndex in row) {
-      const letterValidity = row[letterIndex];
-      const letter = words[rowNumber][letterIndex].toLowerCase();
-      switch (letterValidity) {
-
-        //If it's in the wrong position push the index where we know it's not
-        case 'wrong-pos':
-          if (!wrongLetterPlaces[letter])
-            wrongLetterPlaces[letter] = [];
-          if (!knownLetters.includes(letter))
-            knownLetters.push(letter);
-          wrongLetterPlaces[letter].push(letterIndex);
-          break;
-
-        //If it's correct set it to the position of where it is
-        case 'correct':
-          correctLetters[letterIndex] = letter;
-          break;
-
-        //If it's wrong put it with all the wrong ones
-        default:
-          wrongLetters.push(letter);
-          break;
-      }
-    }
+    analyze(rowNumber);
   }
 }
 

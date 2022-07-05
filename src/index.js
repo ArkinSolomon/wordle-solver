@@ -239,16 +239,16 @@ class App extends React.Component {
   }
 }
 
-// ReactDOM.render(<App />, document.querySelector('#root'));
+ReactDOM.render(<App />, document.querySelector('#root'));
 
-let correct = 0;
-const attempts = 100;
-for (let i = 0; i < attempts; ++i) {
-  const app = ReactDOM.render(<App />, document.querySelector('#root'));
-  await app.autosolve();
-  correct += app.state.isCorrect;
-  console.log(`${i + 1}/${attempts}`)
-  if (i !== attempts - 1)
-    ReactDOM.unmountComponentAtNode(document.getElementById('root'));
-}
-console.log(correct / attempts);
+// let correct = 0;
+// const attempts = 100;
+// for (let i = 0; i < attempts; ++i) {
+//   const app = ReactDOM.render(<App />, document.querySelector('#root'));
+//   await app.autosolve();
+//   correct += app.state.isCorrect;
+//   console.log(`${i + 1}/${attempts}`)
+//   if (i !== attempts - 1)
+//     ReactDOM.unmountComponentAtNode(document.getElementById('root'));
+// }
+// console.log(correct / attempts);
