@@ -146,7 +146,7 @@ class App extends React.Component {
               this.showError('Aww you didn\'t get the word, the word was: ' + this.state.answer, Infinity, () => { });
           }
           this.setState({ validity, done, isCorrect }, resolve);
-        } else 
+        } else
           resolve();
       });
     });
@@ -154,7 +154,7 @@ class App extends React.Component {
 
   //Insert a whole word
   async insertWord(word) {
-    for (const letter of word.toUpperCase().split('')) 
+    for (const letter of word.toUpperCase().split(''))
       await this.insertLetter(letter);
   }
 
@@ -201,7 +201,16 @@ class App extends React.Component {
 
   //Start autosolving
   autosolve() {
+
+    //Don't solve if we're locked
+    if (this.state.locked)
+      return;
+    
+    //Destroy the button
+    document.getElementById('solve-button').remove();
+    
     return new Promise(resolve => {
+
       //Clear whatever current row we're on
       this.setState(state => {
         const newWords = state.words;
@@ -229,10 +238,10 @@ class App extends React.Component {
         {this.state.isErrorShown && <ErrorMessage message={this.state.message}></ErrorMessage>}
         {this.state.isSuccessShown && <SuccessMessage message={this.state.message}></SuccessMessage>}
         <center>
-          <h1>Wordle</h1>
+          <h1>Wordle Solver</h1>
           {rows}
           <br />
-          <button onClick={this.autosolve.bind(this)}>Solve</button>
+          <button id='solve-button' onClick={this.autosolve.bind(this)}>Solve</button>
         </center >
       </div>
     );
