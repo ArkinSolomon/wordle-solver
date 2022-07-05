@@ -11,9 +11,9 @@ import solve from 'solver';
 words.sort();
 
 //The size of words
-const wordSize = 5;
+const wordSize = words[0].length;
 
-//The amount of rows
+//The amount of rows (guesses)
 const rowCount = 6;
 
 //A single letter square
@@ -57,8 +57,6 @@ class App extends React.Component {
       locked: false,
       _messageTimerId: void (0)
     };
-
-    console.log(this.state.answer);
     this.eventListener = e => this.keydown(e);
   }
 
@@ -244,11 +242,12 @@ class App extends React.Component {
 // ReactDOM.render(<App />, document.querySelector('#root'));
 
 let correct = 0;
-const attempts = 10000;
+const attempts = 100;
 for (let i = 0; i < attempts; ++i) {
   const app = ReactDOM.render(<App />, document.querySelector('#root'));
   await app.autosolve();
   correct += app.state.isCorrect;
+  console.log(`${i + 1}/${attempts}`)
   if (i !== attempts - 1)
     ReactDOM.unmountComponentAtNode(document.getElementById('root'));
 }
