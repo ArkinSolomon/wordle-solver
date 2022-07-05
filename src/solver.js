@@ -42,11 +42,10 @@ export default async function solve(app) {
       }
     }
 
-    console.log(wordList);
+    //Make a guess
     const guess = randomItem(wordList);
     await app.insertWord(guess);
-    validity = app.state.validity;
-    words = app.state.words;
+    ({ validity, words } = app.state);
 
     //Analyze the output
     const rowNumber = app.state.currentRow - 1;
@@ -77,7 +76,6 @@ export default async function solve(app) {
           break;
       }
     }
-    console.log('bottom')
   }
 }
 

@@ -59,19 +59,26 @@ class App extends React.Component {
     };
 
     console.log(this.state.answer);
-
-    window.addEventListener('keydown', e => this.keydown(e));
+    this.eventListener = e => this.keydown(e);
   }
 
   //Get keydown events and apply them to the proper letter
-  keydown(e) {
+  async keydown(e) {
     if (this.state.done || this.state.locked) return e.preventDefault();
     const key = String.fromCharCode(e.keyCode);
 
     //Only detect alpha keys and backspace
     if ((!/[a-z]/i.test(key) || key.length > 1) && e.keyCode !== 8) return;
 
-    this.insertLetter(e.keyCode === 8 ? 'DELETE' : key);
+    await this.insertLetter(e.keyCode === 8 ? 'DELETE' : key);
+  }
+
+  componentDidMount() {
+    window.addEventListener('keydown', this.eventListener);
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('keydown', this.eventListener);
   }
 
   //Insert a letter
@@ -102,20 +109,20 @@ class App extends React.Component {
           //Check if it's a word if it's not clear the row
           if (!words.includes(oldWord.toLowerCase())) {
             const originallyLocked = this.state.locked;
-            this.setState({ locked: true });
+            return this.setState({ locked: true }, () => {
 
-            //Display an error message
-            return this.showError('Not in word list', 1500, () => {
-              this.setState(state => {
-
-                const words = state.words.slice();
-                words[oldRow] = '';
-                return {
-                  currentRow: oldRow,
-                  words,
-                  locked: originallyLocked
-                }
-              }, resolve);
+              //Display an error message
+              this.showError('Not in word list', 1500, () => {
+                this.setState(state => {
+                  const words = state.words.slice();
+                  words[oldRow] = '';
+                  return {
+                    currentRow: oldRow,
+                    words,
+                    locked: originallyLocked
+                  }
+                }, resolve);
+              });
             });
           }
 
@@ -141,15 +148,15 @@ class App extends React.Component {
               this.showError('Aww you didn\'t get the word, the word was: ' + this.state.answer, Infinity, () => { });
           }
           this.setState({ validity, done, isCorrect }, resolve);
-
-        }
+        } else 
+          resolve();
       });
     });
   }
 
   //Insert a whole word
   async insertWord(word) {
-    for (const letter of word.toUpperCase().split())
+    for (const letter of word.toUpperCase().split('')) 
       await this.insertLetter(letter);
   }
 
@@ -196,22 +203,25 @@ class App extends React.Component {
 
   //Start autosolving
   autosolve() {
-
-    //Clear whatever current row we're on
-    this.setState(state => {
-      const newWords = state.words;
-      newWords[state.currentRow] = '';
-      return {
-        locked: true,
-        words: newWords
-      };
-    })
-
-    solve(this);
+    return new Promise(resolve => {
+      //Clear whatever current row we're on
+      this.setState(state => {
+        const newWords = state.words;
+        newWords[state.currentRow] = '';
+        return {
+          locked: true,
+          words: newWords
+        };
+      }, async () => {
+        await solve(this);
+        resolve();
+      });
+    });
   }
 
   //Main render function
   render() {
+
     //Create all the rows
     const rows = [];
     for (let i = 0; i < rowCount; ++i)
@@ -230,4 +240,16 @@ class App extends React.Component {
     );
   }
 }
-ReactDOM.render(<App />, document.querySelector('#root'));
+
+// ReactDOM.render(<App />, document.querySelector('#root'));
+
+let correct = 0;
+const attempts = 10000;
+for (let i = 0; i < attempts; ++i) {
+  const app = ReactDOM.render(<App />, document.querySelector('#root'));
+  await app.autosolve();
+  correct += app.state.isCorrect;
+  if (i !== attempts - 1)
+    ReactDOM.unmountComponentAtNode(document.getElementById('root'));
+}
+console.log(correct / attempts);
